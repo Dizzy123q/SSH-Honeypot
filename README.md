@@ -88,7 +88,7 @@ Attacker
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<username>/ssh-honeypot.git
+git clone https://github.com/Dizzy123q/SSH-Honeypot.git
 cd ssh-honeypot
 ```
 
@@ -148,16 +148,14 @@ The SSH server starts on port **2222**. The web interface is available at **http
 ## Screenshots
 
 ### Main Dashboard
-<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
-*coming soon*
+![Dashboard](docs/screenshots/dashboard.png)
+
 
 ### Session List
-<!-- ![Sessions](docs/screenshots/sessions.png) -->
-*coming soon*
+![Sessions](docs/screenshots/sessions.png)
 
 ### Session Report
-<!-- ![Report](docs/screenshots/report.png) -->
-*coming soon*
+![Report](docs/screenshots/report.png)
 
 ---
 

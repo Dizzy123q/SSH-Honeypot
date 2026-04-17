@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Honeypot - Session Logs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-[#161616] text-white">
+            <div class="p-4">
+                <h1 class="text-3xl font-bold">SSH Honeypot</h1>
+            </div>
+            <nav class="mt-4">
+                <a href="{{ url_for('index') }}" class="flex items-center px-4 py-3 hover:bg-[#000000]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('logs') }}" class="flex items-center px-4 py-3 bg-[#000000] text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Session Logs
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <div class="bg-[#000000] min-h-full p-6">
+                <div class="bg-[#161616] rounded-xl shadow p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold text-blue-500">Session Logs</h1>
+                        <form action="{{ url_for('update_sessions') }}" method="POST">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Check for new logs
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-3xl">
+                        <table class="min-w-full">
+                            <thead class="bg-[#393939]">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Date / Time
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        IP
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        HTML Report
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Text Report
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-[#121212]">
+                                {% if logs %}
+                                    {% for log in logs %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                            {{ log['formatted_timestamp']|default(log['timestamp']|default('-')) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                            {{ log['ip']|default('-') }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                            <a href="{{ url_for('generate_report', format='html', log_filename=log['filename']) }}" class="text-white focus:ring-4 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-blue-800">
+                                                HTML Report
+                                            </a>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="{{ url_for('generate_report', format='text', log_filename=log['filename']) }}" class="text-white focus:ring-4 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-blue-800">
+                                                Text Report
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-300">
+                                            No sessions found.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session details modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Session details</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modalContent" class="mt-4">
+                <div class="animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDetails(sessionId) {
+            document.getElementById('detailsModal').classList.remove('hidden');
+            fetch('/api/sessions')
+                .then(response => response.json())
+                .then(data => {
+                    const session = data.find(s => s.id == sessionId);
+                    if (session) {
+                        let displayTimestamp = session.timestamp || '';
+                        let displayIp = session.ip || '';
+                        if (session.filename && session.filename.includes('_')) {
+                            const parts = session.filename.split('_');
+                            displayIp = parts[0];
+                            const ts = parts[1].split('.')[0];
+                            if (ts.length === 14) {
+                                displayTimestamp = `${ts.substring(0,4)}-${ts.substring(4,6)}-${ts.substring(6,8)} ${ts.substring(8,10)}:${ts.substring(10,12)}:${ts.substring(12,14)}`;
+                            }
+                        }
+                        let content = `
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div><p class="text-sm text-gray-500">Date / Time</p><p class="font-medium">${displayTimestamp}</p></div>
+                                <div><p class="text-sm text-gray-500">IP</p><p class="font-medium">${displayIp}</p></div>
+                                <div><p class="text-sm text-gray-500">Country</p><p class="font-medium">${session.country || 'Unknown'}</p></div>
+                                <div><p class="text-sm text-gray-500">Score</p><p class="font-medium">${session.score || 'N/A'}</p></div>
+                            </div>
+                            <div class="mb-4">
+                                <p class="text-sm text-gray-500 mb-1">Executed commands</p>
+                                <div class="bg-gray-100 p-3 rounded-lg text-sm font-mono overflow-x-auto">
+                                    <pre>${session.commands || 'No commands'}</pre>
+                                </div>
+                            </div>`;
+                        if (session.filename) {
+                            content += `<div class="mb-4"><p class="text-sm text-gray-500 mb-1">File name</p><div class="bg-gray-100 p-3 rounded-lg text-sm font-mono">${session.filename}</div></div>`;
+                        }
+                        if (session.details) {
+                            content += `<div class="mb-4"><p class="text-sm text-gray-500 mb-1">Additional details</p><div class="bg-gray-100 p-3 rounded-lg text-sm"><pre>${JSON.stringify(session.details, null, 2)}</pre></div></div>`;
+                        }
+                        if (session.timeline && session.timeline.length > 0) {
+                            content += `<div><p class="text-sm text-gray-500 mb-1">Timeline</p><div class="space-y-2">`;
+                            session.timeline.forEach(event => {
+                                content += `<div class="flex"><div class="mr-2 text-xs text-gray-500">${event.time || ''}</div><div class="text-sm">${event.action || ''}</div></div>`;
+                            });
+                            content += `</div></div>`;
+                        }
+                        document.getElementById('modalContent').innerHTML = content;
+                    } else {
+                        document.getElementById('modalContent').innerHTML = `<p class="text-red-500">Session not found.</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('modalContent').innerHTML = `<p class="text-red-500">Error loading details: ${error.message}</p>`;
+                });
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target === modal) closeModal();
+        }
+    </script>
+</body>
+</html>

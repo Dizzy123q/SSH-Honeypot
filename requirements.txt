@@ -1,0 +1,4 @@
+paramiko
+docker
+flask
+requests

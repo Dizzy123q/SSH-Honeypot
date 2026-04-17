@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# SSH keys (generated at runtime)
+keys/
+
+# Session logs (contain attacker data — exclude or keep depending on intent)
+logs/*.log
+
+# Quarantine (files uploaded by attackers)
+quarantine/
+
+# Generated reports
+reports/
+
+# Environment variables
+.env
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

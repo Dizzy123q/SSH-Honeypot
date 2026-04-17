@@ -1,0 +1,23 @@
+# Server Configuration
+server:
+  host: 192.168.1.100
+  port: 5432
+  debug: false
+  environment: production
+
+database:
+  host: db.internal.company.com
+  port: 5432
+  username: dbadmin
+  password: Pr0d@dm1nDB!
+  database: customer_records
+
+api:
+  secret_key: "sk_live_Kd83jDnekDm39DkeKd83jD"
+  endpoint: 
+  rate_limit: 100
+
+backup:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  target: "s3://company-backups/production/"
+  retention: 30  # days

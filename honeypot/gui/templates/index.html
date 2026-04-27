@@ -9,446 +9,376 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datamaps/0.5.9/datamaps.all.min.js"></script>
+    <style>
+        body { background: #0a0a0a; font-family: system-ui, sans-serif; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 16px; color: #666; transition: all 0.15s; text-decoration: none; }
+        .nav-item:hover { color: #ccc; background: #161616; }
+        .nav-item.active { color: #fff; background: #161616; }
+        .stat-box { background: #0f0f0f; border-radius: 10px; padding: 16px; }
+        .card { background: #111; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .card-header { font-size: 16px; color: #555; margin-bottom: 16px; padding-bottom: 12px; }
+        .session-card { background: #0f0f0f; border-radius: 10px; padding: 14px; }
+        .session-score { font-size: 14px; font-weight: 500; color: #888; background: #1a1a1a; padding: 3px 8px; border-radius: 6px; }
+        .analyze-btn { display: block; margin-top: 12px; font-size: 14px; color: #888; background: #1a1a1a; border-radius: 6px; padding: 5px 10px; cursor: pointer; text-align: center; text-decoration: none; }
+        .analyze-btn:hover { color: #ccc; background: #222; }
+        .refresh-btn { font-size: 16px; color: #888; background: #1a1a1a; border-radius: 8px; padding: 7px 16px; cursor: pointer; border: none; }
+        .refresh-btn:hover { color: #ccc; background: #222; }
+        .soph-box { background: #0f0f0f; border-radius: 10px; padding: 14px; }
+    </style>
 </head>
-<body class="bg-black">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <div class="w-64 bg-[#161616] text-white">
-            <div class="p-4">
-                <h1 class="text-3xl font-bold">SSH Honeypot</h1>
-            </div>
-            <nav class="mt-4">
-                <a href="#" class="flex items-center px-4 py-3 bg-[#000000] text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    Dashboard
-                </a>
-                <a href="{{ url_for('logs') }}" class="flex items-center px-4 py-3 hover:bg-[#000000]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    Session Logs
-                </a>
-            </nav>
+<body>
+<div class="flex h-screen">
+
+    <!-- Sidebar -->
+    <div class="w-56 flex-shrink-0" style="background:#111">
+        <div class="p-5 pb-4">
+            <h1 class="font-medium text-white" style="font-size:20px;letter-spacing:0.02em">SSH Honeypot</h1>
+            <p style="font-size:14px;color:#555;margin-top:2px">Monitor & Analysis</p>
         </div>
-
-        <!-- Main Content -->
-        <div class="flex-1 overflow-auto">
-            <div class="p-6">
-                <div class="bg-[#161616] rounded-3xl shadow p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold text-blue-500">Dashboard</h1>
-                        <form action="/update_global" method="POST">
-                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl">
-                                Refresh statistics
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- General Stats -->
-                    <div class="mb-6">
-                        <h2 class="text-xl font-semibold text-white mb-2">General statistics</h2>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div class="bg-[#393939] p-4 rounded-3xl">
-                                <span class="text-md text-gray-300">Total sessions analyzed</span>
-                                <p class="text-3xl text-white font-bold">{{ stats.total_sessions }}</p>
-                            </div>
-                            <div class="bg-[#393939] p-4 rounded-3xl">
-                                <span class="text-md text-gray-300">Average session duration</span>
-                                <p class="text-3xl text-white font-bold">{{ stats.average_duration }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Most Interesting Logs -->
-                    <div class="mb-6">
-                        <div class="bg-[#212121] rounded-3xl">
-                            <div class="p-3 bg-[#393939] rounded-xl">
-                                <h3 class="font-semibold text-gray-300">Recommended sessions for analysis</h3>
-                            </div>
-                            <div class="p-4">
-                                <p class="text-white text-md mb-4">Top sessions ranked by attack complexity score:</p>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {% if stats.interesting_logs %}
-                                        {% for log in stats.interesting_logs %}
-                                        <div class="bg-[#393939] p-4 rounded-xl border-l-4 border-blue-500">
-                                            <div class="flex justify-between items-start mb-2">
-                                                <h4 class="text-white font-semibold text-sm">{{ log.file_name }}</h4>
-                                                <span class="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
-                                                    {{ "%.1f"|format(log.score) }}
-                                                </span>
-                                            </div>
-                                            <div class="text-gray-300 text-xs space-y-1">
-                                                <div class="flex justify-between">
-                                                    <span>Commands:</span>
-                                                    <span class="font-semibold">{{ log.summary.command_count }}</span>
-                                                </div>
-                                                <div class="flex justify-between">
-                                                    <span>Duration:</span>
-                                                    <span class="font-semibold">{{ log.summary.duration }}</span>
-                                                </div>
-                                                <div class="flex justify-between">
-                                                    <span>IP:</span>
-                                                    <span class="font-semibold">{{ log.summary.ip }}</span>
-                                                </div>
-                                                <div class="flex justify-between">
-                                                    <span>Country:</span>
-                                                    <span class="font-semibold">{{ log.summary.country }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="mt-3">
-                                                <a href="{{ url_for('analyze_session', filename=log.file_name) }}" 
-                                                   class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs transition-colors">
-                                                    Analyze
-                                                </a>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="col-span-3 text-center text-gray-400 py-8">
-                                            <p>No sessions available for recommendation</p>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Geographic Distribution -->
-                    <div class="mb-6">
-                        <div class="bg-[#212121] rounded-3xl">
-                            <div class="p-3 bg-[#393939] rounded-xl">
-                                <h3 class="font-semibold text-gray-300">Geographic distribution</h3>
-                            </div>
-                            <div class="p-4">
-                                <p class="text-white text-md mb-2">Unique IPs: <span class="font-semibold">{{ stats.geographic_distribution.unique_ips }}</span></p>
-                                <div id="world-map" style="height: 400px;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Attack Distribution Chart -->
-                    <div class="mb-6">
-                        <div class="bg-[#212121] rounded-3xl">
-                            <div class="p-3 bg-[#393939] rounded-xl">
-                                <h3 class="font-semibold text-gray-300">Attack distribution</h3>
-                            </div>
-                            <div class="p-4 text-gray-300">
-                                <div class="w-full" style="height: 300px;">
-                                    <canvas id="attackDistributionChart"></canvas>
-                                </div>
-                                <div class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {% for category, count in stats.attack_distribution.counts.items() %}
-                                    <div class="flex items-center">
-                                        <span class="w-5 h-5 rounded-lg mr-2 attack-color" data-category="{{ category }}"></span>
-                                        <span class="text-sm">{{ category }}: {{ "%.2f"|format(stats.attack_distribution.percentages[category]) }}%</span>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Common Commands -->
-                    <div class="mb-6">
-                        <div class="bg-[#212121] rounded-3xl">
-                            <div class="p-3 bg-[#393939] rounded-xl">
-                                <h3 class="font-semibold text-gray-300">Most frequent commands</h3>
-                            </div>
-                            <div class="p-4">
-                                <div class="w-full" style="height: 400px;">
-                                    <canvas id="commandsChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Time Patterns -->
-                    <div class="mb-6">
-                        <div class="bg-[#212121] rounded-3xl">
-                            <div class="p-3 bg-[#393939] rounded-xl">
-                                <h3 class="font-semibold text-gray-300">Temporal patterns</h3>
-                            </div>
-                            <div class="text-gray-300 p-4">
-                                <h4 class="text-sm font-medium text-gray-300 mt-3 mb-1">Hourly distribution:</h4>
-                                <div class="w-full" style="height: 300px;">
-                                    <canvas id="timePatternChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sophistication Level -->
-                    <div class="mb-6">
-                        <div class="bg-[#212121] rounded-3xl">
-                            <div class="p-3 bg-[#393939] rounded-xl">
-                                <h3 class="font-semibold text-gray-300">Attack sophistication</h3>
-                            </div>
-                            <div class="text-gray-300 p-4">
-                                <div class="grid grid-cols-3 gap-2 mb-3">
-                                    <div>
-                                        <p class="text-md text-gray-300">Average score</p>
-                                        <p class="text-xl text-white font-bold">{{ "%.2f"|format(stats.attack_sophistication.average_score) }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">Max score</p>
-                                        <p class="text-xl text-white font-bold">{{ stats.attack_sophistication.max_score }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">Min score</p>
-                                        <p class="text-xl text-white font-bold">{{ stats.attack_sophistication.min_score }}</p>
-                                    </div>
-                                </div>
-                                <div class="w-full" style="height: 300px;">
-                                    <canvas id="sophisticationChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <nav class="py-3">
+            <a href="#" class="nav-item active">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                Dashboard
+            </a>
+            <a href="{{ url_for('logs') }}" class="nav-item">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Session Logs
+            </a>
+        </nav>
     </div>
 
-    <script>
-    const countryISOMap = {
-        'Germany': 'DEU', 'Ireland': 'IRL', 'France': 'FRA', 'United Kingdom': 'GBR',
-        'Romania': 'ROU', 'Italy': 'ITA', 'Spain': 'ESP', 'Poland': 'POL',
-        'Netherlands': 'NLD', 'Belgium': 'BEL', 'Portugal': 'PRT', 'Greece': 'GRC',
-        'Czech Republic': 'CZE', 'Sweden': 'SWE', 'Austria': 'AUT', 'Switzerland': 'CHE',
-        'Norway': 'NOR', 'Denmark': 'DNK', 'Finland': 'FIN', 'Hungary': 'HUN',
-        'Bulgaria': 'BGR', 'Serbia': 'SRB', 'Croatia': 'HRV', 'Slovakia': 'SVK',
-        'Ukraine': 'UKR', 'China': 'CHN', 'Russia': 'RUS', 'India': 'IND',
-        'Japan': 'JPN', 'South Korea': 'KOR', 'Indonesia': 'IDN', 'Turkey': 'TUR',
-        'Saudi Arabia': 'SAU', 'Iran': 'IRN', 'Thailand': 'THA', 'Vietnam': 'VNM',
-        'Singapore': 'SGP', 'Malaysia': 'MYS', 'Philippines': 'PHL', 'Pakistan': 'PAK',
-        'Bangladesh': 'BGD', 'Israel': 'ISR', 'United Arab Emirates': 'ARE',
-        'United States': 'USA', 'Canada': 'CAN', 'Mexico': 'MEX',
-        'Brazil': 'BRA', 'Argentina': 'ARG', 'Colombia': 'COL', 'Chile': 'CHL',
-        'Peru': 'PER', 'Venezuela': 'VEN', 'Ecuador': 'ECU', 'Bolivia': 'BOL',
-        'Paraguay': 'PRY', 'Uruguay': 'URY', 'South Africa': 'ZAF', 'Egypt': 'EGY',
-        'Nigeria': 'NGA', 'Morocco': 'MAR', 'Kenya': 'KEN', 'Ethiopia': 'ETH',
-        'Ghana': 'GHA', 'Algeria': 'DZA', 'Tunisia': 'TUN', 'Uganda': 'UGA',
-        'Zimbabwe': 'ZWE', 'Australia': 'AUS', 'New Zealand': 'NZL',
-        'Fiji': 'FJI', 'Papua New Guinea': 'PNG'
-    };
+    <!-- Main Content -->
+    <div class="flex-1 overflow-auto">
+        <div class="p-7" style="max-width:900px">
 
-    const chartColors = [
-        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-        '#FF9F40', '#8AC249', '#EA5545', '#F46A9B', '#EF9B20'
-    ];
+            <!-- Page title + refresh -->
+            <div class="flex justify-between items-center mb-7">
+                <div>
+                    <h1 class="font-medium text-white" style="font-size:30px">Dashboard</h1>
+                    <p style="font-size:14px;color:#555;margin-top:2px">Attack overview & session analysis</p>
+                </div>
+                <form action="/update_global" method="POST">
+                    <button type="submit" class="refresh-btn">Refresh statistics</button>
+                </form>
+            </div>
 
-    window.onload = function() {
-        drawAttackChart();
-        drawWorldMap();
-        drawCommandsChart();
-        drawTimePatternChart();
-        drawSophisticationChart();
-        setLegendColors();
-    };
+            <!-- General Stats -->
+            <p style="font-size:14px;font-weight:500;color:#555;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px">General statistics</p>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="stat-box">
+                    <p style="font-size:16px;color:#aaa;margin-bottom:6px">Total sessions analyzed</p>
+                    <p class="text-white font-medium" style="font-size:30px">{{ stats.total_sessions }}</p>
+                </div>
+                <div class="stat-box">
+                    <p style="font-size:16px;color:#aaa;margin-bottom:6px">Average session duration</p>
+                    <p class="text-white font-medium" style="font-size:30px">{{ stats.average_duration }}</p>
+                </div>
+            </div>
 
-    function drawAttackChart() {
-        var ctx = document.getElementById('attackDistributionChart');
-        if (!ctx) return;
-        var attackData = {
-            labels: [{% for category, count in stats.attack_distribution.counts.items() %}"{{ category }}",{% endfor %}],
+            <!-- Interesting Sessions -->
+            <div class="card">
+                <div class="card-header">Recommended sessions for analysis</div>
+                <div class="grid grid-cols-3 gap-3">
+                    {% if stats.interesting_logs %}
+                        {% for log in stats.interesting_logs %}
+                        <div class="session-card">
+                            <div class="flex justify-between items-start mb-3">
+                                <span style="font-size:14px;color:#ccc;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%" title="{{ log.file_name }}">{{ log.file_name }}</span>
+                                <span class="session-score">{{ "%.1f"|format(log.score) }}</span>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px">
+                                <div class="flex justify-between" style="font-size:13px">
+                                    <span style="color:#555">Commands</span>
+                                    <span style="color:#aaa">{{ log.summary.command_count }}</span>
+                                </div>
+                                <div class="flex justify-between" style="font-size:13px">
+                                    <span style="color:#555">Duration</span>
+                                    <span style="color:#aaa">{{ log.summary.duration }}</span>
+                                </div>
+                                <div class="flex justify-between" style="font-size:13px">
+                                    <span style="color:#555">IP</span>
+                                    <span style="color:#aaa">{{ log.summary.ip }}</span>
+                                </div>
+                                <div class="flex justify-between" style="font-size:13px">
+                                    <span style="color:#555">Country</span>
+                                    <span style="color:#aaa">{{ log.summary.country }}</span>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('analyze_session', filename=log.file_name) }}" class="analyze-btn">Analyze</a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-span-3 text-center py-8" style="color:#444;font-size:13px">No sessions available</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Geographic Distribution -->
+            <div class="card">
+                <div class="card-header">Geographic distribution — Unique IPs: {{ stats.geographic_distribution.unique_ips }}</div>
+                <div id="world-map" style="height:320px;border-radius:10px;overflow:hidden;background:#0f0f0f"></div>
+            </div>
+
+            <!-- Attack Distribution -->
+            <div class="card">
+                <div class="card-header">Attack distribution</div>
+                <div style="height:240px"><canvas id="attackDistributionChart"></canvas></div>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    {% for category, count in stats.attack_distribution.counts.items() %}
+                    <div class="flex items-center gap-1.5" style="font-size:14px;color:#666">
+                        <span class="attack-color" style="width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+                        {{ category }}: {{ "%.1f"|format(stats.attack_distribution.percentages[category]) }}%
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Common Commands -->
+            <div class="card">
+                <div class="card-header">Most frequent commands</div>
+                <div style="height:280px"><canvas id="commandsChart"></canvas></div>
+            </div>
+
+            <!-- Time Patterns -->
+            <div class="card">
+                <div class="card-header">Temporal patterns — hourly distribution</div>
+                <div style="height:220px"><canvas id="timePatternChart"></canvas></div>
+            </div>
+
+            <!-- Sophistication -->
+            <div class="card">
+                <div class="card-header">Attack sophistication</div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="soph-box">
+                        <p style="font-size:16px;color:#aaa;margin-bottom:6px">Average score</p>
+                        <p class="text-white font-medium" style="font-size:24px">{{ "%.2f"|format(stats.attack_sophistication.average_score) }}</p>
+                    </div>
+                    <div class="soph-box">
+                        <p style="font-size:16px;color:#aaa;margin-bottom:6px">Max score</p>
+                        <p class="text-white font-medium" style="font-size:24px">{{ stats.attack_sophistication.max_score }}</p>
+                    </div>
+                    <div class="soph-box">
+                        <p style="font-size:16px;color:#aaa;margin-bottom:6px">Min score</p>
+                        <p class="text-white font-medium" style="font-size:24px">{{ stats.attack_sophistication.min_score }}</p>
+                    </div>
+                </div>
+                <div style="height:220px;margin-top:16px"><canvas id="sophisticationChart"></canvas></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+const countryISOMap = {
+    'Germany':'DEU','Ireland':'IRL','France':'FRA','United Kingdom':'GBR','Romania':'ROU',
+    'Italy':'ITA','Spain':'ESP','Poland':'POL','Netherlands':'NLD','Belgium':'BEL',
+    'Portugal':'PRT','Greece':'GRC','Czech Republic':'CZE','Sweden':'SWE','Austria':'AUT',
+    'Switzerland':'CHE','Norway':'NOR','Denmark':'DNK','Finland':'FIN','Hungary':'HUN',
+    'Bulgaria':'BGR','Serbia':'SRB','Croatia':'HRV','Slovakia':'SVK','Ukraine':'UKR',
+    'China':'CHN','Russia':'RUS','India':'IND','Japan':'JPN','South Korea':'KOR',
+    'Indonesia':'IDN','Turkey':'TUR','Saudi Arabia':'SAU','Iran':'IRN','Thailand':'THA',
+    'Vietnam':'VNM','Singapore':'SGP','Malaysia':'MYS','Philippines':'PHL','Pakistan':'PAK',
+    'Bangladesh':'BGD','Israel':'ISR','United Arab Emirates':'ARE','United States':'USA',
+    'Canada':'CAN','Mexico':'MEX','Brazil':'BRA','Argentina':'ARG','Colombia':'COL',
+    'Chile':'CHL','Peru':'PER','Venezuela':'VEN','Ecuador':'ECU','Bolivia':'BOL',
+    'Paraguay':'PRY','Uruguay':'URY','South Africa':'ZAF','Egypt':'EGY','Nigeria':'NGA',
+    'Morocco':'MAR','Kenya':'KEN','Ethiopia':'ETH','Ghana':'GHA','Algeria':'DZA',
+    'Tunisia':'TUN','Uganda':'UGA','Zimbabwe':'ZWE','Australia':'AUS','New Zealand':'NZL',
+    'Fiji':'FJI','Papua New Guinea':'PNG'
+};
+
+const monoColors = ['#e5e5e5','#aaa','#777','#555','#3a3a3a','#2a2a2a','#1e1e1e','#ccc','#888','#444'];
+
+const tooltipDefaults = {
+    backgroundColor:'rgba(17,17,17,0.95)',
+    titleColor:'#ccc',
+    bodyColor:'#888',
+    borderColor:'#2a2a2a',
+    borderWidth:0.5
+};
+
+window.onload = function() {
+    drawAttackChart();
+    drawWorldMap();
+    drawCommandsChart();
+    drawTimePatternChart();
+    drawSophisticationChart();
+    document.querySelectorAll('.attack-color').forEach(function(el, i) {
+        el.style.backgroundColor = monoColors[i % monoColors.length];
+    });
+};
+
+function drawAttackChart() {
+    var ctx = document.getElementById('attackDistributionChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: [{% for c, v in stats.attack_distribution.counts.items() %}"{{ c }}",{% endfor %}],
             datasets: [{
-                data: [{% for category, count in stats.attack_distribution.counts.items() %}{{ count }},{% endfor %}],
-                backgroundColor: chartColors,
+                data: [{% for c, v in stats.attack_distribution.counts.items() %}{{ v }},{% endfor %}],
+                backgroundColor: monoColors,
+                borderWidth: 0
             }]
-        };
-        new Chart(ctx, {
-            type: 'pie',
-            data: attackData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(tooltipItem) {
-                                var dataset = tooltipItem.dataset;
-                                var value = dataset.data[tooltipItem.dataIndex];
-                                var total = dataset.data.reduce(function(a, v) { return a + v; }, 0);
-                                return tooltipItem.label + ': ' + value + ' (' + Math.round((value/total)*100) + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function drawCommandsChart() {
-        var ctx = document.getElementById('commandsChart');
-        if (!ctx) return;
-        var commandsData = [];
-        {% for cmd, freq in stats.top_commands.items() %}
-        commandsData.push({ command: "{{ cmd }}", frequency: {{ freq }} });
-        {% endfor %}
-        commandsData.sort(function(a, b) { return b.frequency - a.frequency; });
-        if (commandsData.length > 10) commandsData = commandsData.slice(0, 10);
-        var commands = commandsData.map(function(i) { return i.command; });
-        var frequencies = commandsData.map(function(i) { return i.frequency; });
-        var barColors = [
-            'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
-            'rgba(83, 102, 255, 0.8)', 'rgba(40, 159, 64, 0.8)'
-        ];
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: commands,
-                datasets: [{
-                    label: 'Frequency',
-                    data: frequencies,
-                    backgroundColor: function(c) { return barColors[c.dataIndex % barColors.length]; },
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 1000, easing: 'easeOutQuart' },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(0,0,0,0.8)',
-                        displayColors: false,
-                        callbacks: {
-                            title: function(i) { return i[0].label; },
-                            label: function(i) { return 'Frequency: ' + i.raw; }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(200,200,200,0.3)' },
-                        ticks: { color: '#444' },
-                        title: { display: true, text: 'Frequency', color: '#444' }
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: { color: '#FFF', font: { size: 14, weight: 'bold' }, padding: 10 },
-                        title: { display: true, text: 'Command', color: '#222' }
-                    }
-                },
-                layout: { padding: { left: 20, right: 20, top: 20, bottom: 10 } }
-            }
-        });
-    }
-
-    function drawTimePatternChart() {
-        var ctx = document.getElementById('timePatternChart');
-        if (!ctx) return;
-        var hours = [], counts = [];
-        {% for hour, count in stats.time_patterns.hourly.items() %}
-        hours.push("{{ hour }}:00");
-        counts.push({{ count }});
-        {% endfor %}
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: hours,
-                datasets: [{
-                    label: 'Number of attacks',
-                    data: counts,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointBorderColor: '#fff',
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-    }
-
-    function drawSophisticationChart() {
-        var ctx = document.getElementById('sophisticationChart');
-        if (!ctx) return;
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Low (1-3)', 'Medium (4-6)', 'High (7-10)'],
-                datasets: [{
-                    data: [
-                        {{ stats.attack_sophistication.sophistication_distribution.low }},
-                        {{ stats.attack_sophistication.sophistication_distribution.medium }},
-                        {{ stats.attack_sophistication.sophistication_distribution.high }}
-                    ],
-                    backgroundColor: [
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(255, 99, 132, 0.8)'
-                    ],
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '60%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { padding: 20, font: { size: 14 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(i) {
-                                var total = i.dataset.data.reduce(function(a, v) { return a + v; }, 0);
-                                return i.label + ': ' + i.raw + ' (' + Math.round((i.raw/total)*100) + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function setLegendColors() {
-        document.querySelectorAll('.attack-color').forEach(function(item, index) {
-            item.style.backgroundColor = chartColors[index % chartColors.length];
-        });
-    }
-
-    function drawWorldMap() {
-        var mapElement = document.getElementById('world-map');
-        if (!mapElement) return;
-        var countryData = {};
-        {% for country, count in stats.geographic_distribution.countries.items() %}
-        var code = countryISOMap['{{ country }}'];
-        if (code) {
-            countryData[code] = { fillKey: 'attackCountry', attackCount: {{ count }}, name: '{{ country }}' };
-        }
-        {% endfor %}
-        var map = new Datamap({
-            element: mapElement,
+        },
+        options: {
             responsive: true,
-            fills: { defaultFill: '#36A2EB', attackCountry: '#FF9F40' },
-            data: countryData,
-            geographyConfig: {
-                borderColor: '#DDDDDD',
-                highlightBorderWidth: 1,
-                highlightFillColor: function(geo) { return countryData[geo.id] ? '#FF9F40' : '#36A2EB'; },
-                highlightBorderColor: '#666666',
-                popupTemplate: function(geo, data) {
-                    if (data && data.attackCount) {
-                        return '<div class="hoverinfo"><strong>' + (data.name || geo.properties.name) + '</strong><br>Count: ' + data.attackCount + ' attacks</div>';
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    ...tooltipDefaults,
+                    callbacks: {
+                        label: function(i) {
+                            var total = i.dataset.data.reduce(function(a, v) { return a + v; }, 0);
+                            return i.label + ': ' + i.raw + ' (' + Math.round((i.raw/total)*100) + '%)';
+                        }
                     }
-                    return '<div class="hoverinfo"><strong>' + geo.properties.name + '</strong></div>';
                 }
             }
-        });
-        window.addEventListener('resize', function() { map.resize(); });
-    }
-    </script>
+        }
+    });
+}
+
+function drawCommandsChart() {
+    var ctx = document.getElementById('commandsChart');
+    if (!ctx) return;
+    var d = [];
+    {% for cmd, freq in stats.top_commands.items() %}
+    d.push({ command: "{{ cmd }}", frequency: {{ freq }} });
+    {% endfor %}
+    d.sort(function(a, b) { return b.frequency - a.frequency; });
+    if (d.length > 10) d = d.slice(0, 10);
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: d.map(function(i) { return i.command; }),
+            datasets: [{
+                data: d.map(function(i) { return i.frequency; }),
+                backgroundColor: '#2a2a2a',
+                hoverBackgroundColor: '#3a3a3a',
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: tooltipDefaults },
+            scales: {
+                x: { grid: { color: '#1a1a1a' }, ticks: { color: '#555' }, title: { display: true, text: 'Frequency', color: '#555', font: { size: 11 } } },
+                y: { grid: { display: false }, ticks: { color: '#aaa', font: { size: 12 } } }
+            }
+        }
+    });
+}
+
+function drawTimePatternChart() {
+    var ctx = document.getElementById('timePatternChart');
+    if (!ctx) return;
+    var hours = [], counts = [];
+    {% for h, c in stats.time_patterns.hourly.items() %}
+    hours.push("{{ h }}:00");
+    counts.push({{ c }});
+    {% endfor %}
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: [{
+                data: counts,
+                backgroundColor: 'rgba(80,80,80,0.15)',
+                borderColor: '#555',
+                borderWidth: 1.5,
+                pointBackgroundColor: '#555',
+                pointRadius: 3,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: tooltipDefaults },
+            scales: {
+                x: { grid: { color: '#1a1a1a' }, ticks: { color: '#555', font: { size: 10 } } },
+                y: { beginAtZero: true, grid: { color: '#1a1a1a' }, ticks: { color: '#555' } }
+            }
+        }
+    });
+}
+
+function drawSophisticationChart() {
+    var ctx = document.getElementById('sophisticationChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Low (1–3)', 'Medium (4–6)', 'High (7–10)'],
+            datasets: [{
+                data: [
+                    {{ stats.attack_sophistication.sophistication_distribution.low }},
+                    {{ stats.attack_sophistication.sophistication_distribution.medium }},
+                    {{ stats.attack_sophistication.sophistication_distribution.high }}
+                ],
+                backgroundColor: ['#2a2a2a', '#444', '#666'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#555', padding: 16, font: { size: 11 } } },
+                tooltip: {
+                    ...tooltipDefaults,
+                    callbacks: {
+                        label: function(i) {
+                            var total = i.dataset.data.reduce(function(a, v) { return a + v; }, 0);
+                            return i.label + ': ' + i.raw + ' (' + Math.round((i.raw/total)*100) + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function drawWorldMap() {
+    var el = document.getElementById('world-map');
+    if (!el) return;
+    var data = {};
+    {% for country, count in stats.geographic_distribution.countries.items() %}
+    var code = countryISOMap['{{ country }}'];
+    if (code) data[code] = { fillKey: 'hit', count: {{ count }}, name: '{{ country }}' };
+    {% endfor %}
+    var map = new Datamap({
+        element: el,
+        responsive: true,
+        fills: { defaultFill: '#1a1a1a', hit: '#555' },
+        data: data,
+        geographyConfig: {
+            borderColor: '#222',
+            borderWidth: 0.5,
+            highlightFillColor: '#888',
+            highlightBorderColor: '#444',
+            popupTemplate: function(geo, d) {
+                var name = (d && d.name) || geo.properties.name;
+                var count = d && d.count ? d.count + ' attacks' : '';
+                return '<div class="hoverinfo" style="background:#1a1a1a;padding:8px 12px;border-radius:6px;font-size:12px;color:#ccc"><strong>' + name + '</strong>' + (count ? '<br>' + count : '') + '</div>';
+            }
+        }
+    });
+    window.addEventListener('resize', function() { map.resize(); });
+}
+</script>
 </body>
 </html>

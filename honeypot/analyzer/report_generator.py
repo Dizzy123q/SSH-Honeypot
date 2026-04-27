@@ -18,17 +18,17 @@ class ReportConfig:
     max_resources_per_type: int = 10
 
     css_classes = {
-        'container': 'bg-[#000000] font-sans max-w-5xl mx-auto p-4',
-        'section': 'bg-[#181414] p-3 mb-4 rounded-3xl',
-        'section_inner': 'rounded-3xl bg-[#393939] p-3',
-        'subsection': 'bg-[#161616] p-3 rounded-3xl flex-1 min-w-0 mx-1 min-w-[280px]',
-        'title': 'text-white mb-3 text-2xl font-bold',
-        'subtitle': 'text-white text-lg font-semibold mb-3',
-        'command': 'font-mono bg-[#393939] text-white px-2 py-1 mx-1 inline-block rounded-lg text-sm',
-        'critical': 'text-red-500 font-semibold',
+        'container': 'font-sans max-w-5xl mx-auto p-6',
+        'section': 'bg-[#111111] p-5 mb-4 rounded-xl',
+        'section_inner': 'rounded-xl bg-[#0f0f0f] p-4',
+        'subsection': 'bg-[#0f0f0f] p-4 rounded-xl flex-1 min-w-0 mx-1 min-w-[280px] overflow-hidden',
+        'title': 'text-white mb-3 text-xl font-medium',
+        'subtitle': 'text-gray-300 text-base font-medium mb-3',
+        'command': 'font-mono bg-[#1a1a1a] text-gray-300 px-2 py-1 mx-1 inline-block rounded-lg text-sm break-all',
+        'critical': 'text-red-400 font-medium',
         'warning': 'text-orange-400',
-        'info': 'text-blue-400',
-        'success': 'text-green-400'
+        'info': 'text-gray-400',
+        'success': 'text-gray-300'
     }
 
 class DataFormatter:
@@ -60,12 +60,12 @@ class DataFormatter:
     @staticmethod
     def get_expertise_class(level: str) -> str:
         classes = {
-            'Beginner': 'bg-green-500 text-white',
-            'Intermediate': 'bg-blue-500 text-white',
-            'Advanced': 'bg-orange-500 text-white',
-            'Expert': 'bg-red-500 text-white'
+            'Beginner': 'bg-[#1a1a1a] text-gray-300',
+            'Intermediate': 'bg-[#1a1a1a] text-gray-300',
+            'Advanced': 'bg-[#1a1a1a] text-gray-300',
+            'Expert': 'bg-[#1a1a1a] text-gray-300'
         }
-        return classes.get(level, 'bg-gray-500 text-white')
+        return classes.get(level, 'bg-[#1a1a1a] text-gray-300')
 
 class ReportSection(ABC):
     def __init__(self, config: ReportConfig, data: Dict[str, Any]):
@@ -94,7 +94,7 @@ class SessionInfoSection(ReportSection):
         <div class="{self._css('section')}">
             <h2 class="{self._css('title')}">Session Information</h2>
             <div class="{self._css('section_inner')}">
-                <div class="flex flex-wrap justify-between gap-6">
+                <div class="flex flex-wrap justify-between gap-4">
                     {self._render_attacker_info(ip_info)}
                     {self._render_session_details(session_info)}
                 </div>
@@ -127,24 +127,22 @@ class SessionInfoSection(ReportSection):
             if is_valid_value(value):
                 table_rows += f"""
                 <tr>
-                    <td class="p-2 text-lg text-gray-300">{label}:</td>
-                    <td class="p-2 font-bold text-lg text-white">{value}</td>
+                    <td class="p-2 text-sm text-gray-500">{label}</td>
+                    <td class="p-2 text-sm text-gray-200">{value}</td>
                 </tr>
                 """
 
         if not table_rows:
             table_rows = """
             <tr>
-                <td class="p-2 text-lg text-gray-300" colspan="2">
-                    No attacker information available
-                </td>
+                <td class="p-2 text-sm text-gray-500" colspan="2">No attacker information available</td>
             </tr>
             """
 
         return f"""
         <div class="{self._css('subsection')}">
             <h3 class="{self._css('subtitle')}">Attacker</h3>
-            <table class="w-full border-collapse mb-5">
+            <table class="w-full border-collapse">
                 {table_rows}
             </table>
         </div>
@@ -154,22 +152,22 @@ class SessionInfoSection(ReportSection):
         return f"""
         <div class="{self._css('subsection')}">
             <h3 class="{self._css('subtitle')}">Session</h3>
-            <table class="w-full border-collapse mb-5">
+            <table class="w-full border-collapse">
                 <tr>
-                    <td class="p-2 text-lg text-gray-300">Start:</td>
-                    <td class="p-2 font-bold text-lg text-white">{self.formatter.format_timestamp(session_info.get('start_time'))}</td>
+                    <td class="p-2 text-sm text-gray-500">Start</td>
+                    <td class="p-2 text-sm text-gray-200">{self.formatter.format_timestamp(session_info.get('start_time'))}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 text-lg text-gray-300">End:</td>
-                    <td class="p-2 font-bold text-lg text-white">{self.formatter.format_timestamp(session_info.get('end_time'))}</td>
+                    <td class="p-2 text-sm text-gray-500">End</td>
+                    <td class="p-2 text-sm text-gray-200">{self.formatter.format_timestamp(session_info.get('end_time'))}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 text-lg text-gray-300">Duration:</td>
-                    <td class="p-2 font-bold text-lg text-white">{session_info.get('duration', 'N/A')}</td>
+                    <td class="p-2 text-sm text-gray-500">Duration</td>
+                    <td class="p-2 text-sm text-gray-200">{session_info.get('duration', 'N/A')}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 text-lg text-gray-300">Commands:</td>
-                    <td class="p-2 font-bold text-lg text-white">{session_info.get('command_count', 0)}</td>
+                    <td class="p-2 text-sm text-gray-500">Commands</td>
+                    <td class="p-2 text-sm text-gray-200">{session_info.get('command_count', 0)}</td>
                 </tr>
             </table>
         </div>
@@ -205,7 +203,7 @@ class AttackSummarySection(ReportSection):
             <h2 class="{self._css('title')}">Attack Summary</h2>
             <div class="{self._css('section_inner')}">
                 {self._render_expertise_info(attacker_profile)}
-                <div class="flex flex-wrap justify-between mt-6 gap-6">
+                <div class="flex flex-wrap justify-between mt-4 gap-4">
                     {self._render_top_categories(attack_categories)}
                     {self._render_critical_commands(critical_commands)}
                 </div>
@@ -219,21 +217,20 @@ class AttackSummarySection(ReportSection):
         automated = profile.get('automated_attack', False)
 
         expertise_class = self.formatter.get_expertise_class(expertise_level)
-        automated_class = 'bg-red-500' if automated else 'bg-green-500'
+        automated_label = 'Yes' if automated else 'No'
+        automated_color = 'text-red-400' if automated else 'text-gray-400'
 
         return f"""
-        <p class="text-white font-bold mb-2">
+        <p class="text-gray-300 text-sm mb-2">
             Expertise level:
-            <span class="inline-block px-2 py-1 text-md font-bold rounded-xl mr-1 {expertise_class}">
+            <span class="inline-block px-2 py-1 text-sm rounded-lg mr-1 {expertise_class}">
                 {expertise_level}
             </span>
-            (Score: {expertise_score:.2f})
+            <span class="text-gray-500">(Score: {expertise_score:.2f})</span>
         </p>
-        <p class="text-white font-bold">
+        <p class="text-gray-300 text-sm">
             Automated attack:
-            <span class="inline-block px-2 py-1 text-md font-bold rounded-xl mr-1 {automated_class} text-white">
-                {'Yes' if automated else 'No'}
-            </span>
+            <span class="{automated_color} font-medium">{automated_label}</span>
         </p>
         """
 
@@ -244,19 +241,19 @@ class AttackSummarySection(ReportSection):
         for category, count in top_categories[:9]:
             display_name = category.replace('_', ' ').title()
             categories_html += f"""
-            <li class="text-white font-semibold mb-2">
+            <li class="text-gray-300 text-sm mb-2">
                 {display_name}:
-                <span class="inline-block px-2 py-1 text-md font-bold rounded-xl mr-1 bg-blue-500 text-white">
+                <span class="inline-block px-2 py-0.5 text-xs rounded-lg mr-1 bg-[#1a1a1a] text-gray-400">
                     {count}
-                </span> commands
+                </span>
             </li>
             """
 
         return f"""
         <div class="{self._css('subsection')}">
-            <p class="text-white text-lg font-bold mb-2">Top attack categories:</p>
+            <p class="text-gray-400 text-sm font-medium mb-2">Top attack categories</p>
             <ul class="list-disc pl-5">
-                {categories_html or '<li class="text-gray-300">No categories detected</li>'}
+                {categories_html or '<li class="text-gray-500 text-sm">No categories detected</li>'}
             </ul>
         </div>
         """
@@ -267,24 +264,25 @@ class AttackSummarySection(ReportSection):
             cmd = html_module.escape(cmd_info.get('command', ''))
             severity = cmd_info.get('severity', 0)
 
-            severity_class = 'text-green-600'
             if severity >= 7:
-                severity_class = 'text-red-600 font-bold'
+                severity_class = 'text-red-400'
             elif severity >= 4:
-                severity_class = 'text-orange-500'
+                severity_class = 'text-orange-400'
+            else:
+                severity_class = 'text-gray-500'
 
             commands_html += f"""
-            <li class="text-white mb-2">
-                <span class="{severity_class} font-semibold">[{severity}]</span>
+            <li class="text-gray-300 text-sm mb-2">
+                <span class="{severity_class}">[{severity}]</span>
                 <span class="{self._css('command')}">{cmd}</span>
             </li>
             """
 
         return f"""
         <div class="{self._css('subsection')}">
-            <p class="text-white text-lg font-bold mb-2">Critical commands detected:</p>
+            <p class="text-gray-400 text-sm font-medium mb-2">Critical commands detected</p>
             <ul class="list-disc pl-5">
-                {commands_html or '<li class="text-gray-300">No critical commands detected</li>'}
+                {commands_html or '<li class="text-gray-500 text-sm">No critical commands detected</li>'}
             </ul>
         </div>
         """
@@ -322,10 +320,10 @@ class AttackCategoriesSection(ReportSection):
 
         if not categories:
             return f"""
-            <div class="bg-[#161616] p-4 mb-5 rounded-3xl">
+            <div class="{self._css('section')}">
                 <h2 class="{self._css('title')}">Attack Categories</h2>
                 <div class="{self._css('section_inner')}">
-                    <p class="text-gray-300">No attack categories detected.</p>
+                    <p class="text-gray-500 text-sm">No attack categories detected.</p>
                 </div>
             </div>
             """
@@ -333,10 +331,10 @@ class AttackCategoriesSection(ReportSection):
         categories_html = self._render_categories_grid(categories)
 
         return f"""
-        <div class="bg-[#161616] p-4 mb-5 rounded-3xl">
+        <div class="{self._css('section')}">
             <h2 class="{self._css('title')}">Attack Categories</h2>
             <div class="{self._css('section_inner')}">
-                <div class="flex flex-wrap justify-between gap-6">
+                <div class="flex flex-wrap justify-between gap-4">
                     {categories_html}
                 </div>
             </div>
@@ -364,15 +362,15 @@ class AttackCategoriesSection(ReportSection):
         for i in range(0, len(active_categories), 2):
             html_content.append('<div class="flex flex-wrap justify-between w-full">')
             cat, cmds = active_categories[i]
-            html_content.append(self._render_single_category(cat, cmds, True))
+            html_content.append(self._render_single_category(cat, cmds))
             if i + 1 < len(active_categories):
                 cat, cmds = active_categories[i + 1]
-                html_content.append(self._render_single_category(cat, cmds, False))
+                html_content.append(self._render_single_category(cat, cmds))
             html_content.append('</div>')
 
         return ''.join(html_content)
 
-    def _render_single_category(self, category: str, commands: List, is_first: bool) -> str:
+    def _render_single_category(self, category: str, commands: List) -> str:
         category_names = {
             'system_recon': 'System Recon',
             'privilege_escalation': 'Privilege Escalation',
@@ -388,29 +386,25 @@ class AttackCategoriesSection(ReportSection):
         }
 
         display_name = category_names.get(category, category.replace('_', ' ').title())
-        font_class = 'font-bold' if is_first else 'font-semibold'
 
         commands_html = ""
         for cmd in commands[:self.config.max_commands_display]:
             escaped_cmd = html_module.escape(cmd)
-            if is_first:
-                commands_html += f'<li class="mb-4"><span class="text-white {self._css("command")} px-2 py-1 mx-1 inline-block rounded-xl">{escaped_cmd}</span></li>'
-            else:
-                commands_html += f'<li><span class="{self._css("command")} px-2 py-1 mx-1 mb-4 inline-block rounded-lg">{escaped_cmd}</span></li>'
+            commands_html += f'<li class="mb-2"><span class="{self._css("command")}">{escaped_cmd}</span></li>'
 
         if len(commands) > self.config.max_commands_display:
             remaining = len(commands) - self.config.max_commands_display
-            commands_html += f'<li class="text-gray-300 mb-4">... and {remaining} more commands</li>'
+            commands_html += f'<li class="text-gray-500 text-sm mb-2">... and {remaining} more commands</li>'
 
         return f"""
         <div class="{self._css('subsection')}">
-            <h3 class="text-white text-xl mb-4 {font_class}">
+            <h3 class="text-gray-300 text-sm font-medium mb-3">
                 {display_name}
-                <span class="inline-block px-2 py-1 text-lg font-bold rounded-xl mr-1 bg-blue-500 text-white">
+                <span class="inline-block px-2 py-0.5 text-xs rounded-lg ml-1 bg-[#1a1a1a] text-gray-400">
                     {len(commands)}
                 </span>
             </h3>
-            <ul class="list-disc pl-5 text-white">
+            <ul class="list-disc pl-5 text-gray-300">
                 {commands_html}
             </ul>
         </div>
@@ -448,10 +442,10 @@ class TimelineSection(ReportSection):
 
         if not timeline:
             return f"""
-            <div class="bg-[#161616] p-4 mb-5 rounded-3xl">
+            <div class="{self._css('section')}">
                 <h2 class="{self._css('title')}">Attack Timeline</h2>
                 <div class="{self._css('section_inner')}">
-                    <p class="text-gray-300">No timeline data available.</p>
+                    <p class="text-gray-500 text-sm">No timeline data available.</p>
                 </div>
             </div>
             """
@@ -459,7 +453,7 @@ class TimelineSection(ReportSection):
         phases_html = self._render_timeline_by_phases(timeline)
 
         return f"""
-        <div class="bg-[#161616] p-4 mb-5 rounded-3xl">
+        <div class="{self._css('section')}">
             <h2 class="{self._css('title')}">Attack Timeline</h2>
             <div class="{self._css('section_inner')}">
                 {phases_html}
@@ -476,12 +470,12 @@ class TimelineSection(ReportSection):
             phases[phase].append(item)
 
         phase_config = {
-            'reconnaissance': {'color': 'blue-500', 'name': 'Reconnaissance'},
-            'persistence': {'color': 'orange-500', 'name': 'Persistence'},
-            'exploitation': {'color': 'red-500', 'name': 'Exploitation'},
-            'data_collection': {'color': 'purple-500', 'name': 'Data Collection'},
-            'exploration': {'color': 'green-500', 'name': 'Exploration'},
-            'cleanup': {'color': 'gray-500', 'name': 'Cleanup'}
+            'reconnaissance': {'color': '#555', 'name': 'Reconnaissance'},
+            'persistence':    {'color': '#555', 'name': 'Persistence'},
+            'exploitation':   {'color': '#7a3a3a', 'name': 'Exploitation'},
+            'data_collection':{'color': '#555', 'name': 'Data Collection'},
+            'exploration':    {'color': '#555', 'name': 'Exploration'},
+            'cleanup':        {'color': '#333', 'name': 'Cleanup'}
         }
 
         phase_order = ['reconnaissance', 'persistence', 'exploitation', 'data_collection', 'exploration', 'cleanup']
@@ -491,14 +485,14 @@ class TimelineSection(ReportSection):
             if phase not in phases or not phases[phase]:
                 continue
 
-            config = phase_config.get(phase, {'color': 'gray-500', 'name': phase.replace('_', ' ').title()})
-            color = config['color']
-            phase_name = config['name']
+            cfg = phase_config.get(phase, {'color': '#333', 'name': phase.replace('_', ' ').title()})
+            color = cfg['color']
+            phase_name = cfg['name']
             commands = phases[phase]
 
             html_content.append(f"""
-            <div class="bg-[#000000] p-4 mb-5 rounded-3xl border-l-4 border-{color}">
-                <h3 class="text-{color} text-2xl font-bold mb-4">{phase_name}</h3>
+            <div class="bg-[#0a0a0a] p-4 mb-4 rounded-xl" style="border-left: 2px solid {color}">
+                <h3 class="text-gray-300 text-sm font-medium mb-3">{phase_name}</h3>
             """)
 
             for cmd_info in commands:
@@ -515,22 +509,22 @@ class TimelineSection(ReportSection):
         is_critical = cmd_info.get('critical', False)
         critical_reason = cmd_info.get('critical_reason', '')
 
-        critical_class = 'text-red-600 font-bold' if is_critical else ''
+        critical_class = 'text-red-400' if is_critical else ''
 
         html_content = f"""
-        <div class="p-3 border-l-4 rounded-3xl border-{color} mb-3 bg-[#161616] {critical_class}">
-            <div class="text-gray-300 text-sm font-semibold">{timestamp}</div>
-            <div class="font-mono bg-[#393939] rounded-xl text-white px-2 py-1 block my-1 break-all">{command}</div>
+        <div class="p-3 rounded-xl mb-2 bg-[#111111] {critical_class}">
+            <div class="text-gray-500 text-xs mb-1">{timestamp}</div>
+            <div class="font-mono bg-[#1a1a1a] rounded-lg text-gray-300 px-2 py-1 block my-1 text-sm break-all">{command}</div>
         """
 
         if categories:
-            html_content += '<div class="mt-2">'
+            html_content += '<div class="mt-2 flex flex-wrap gap-1">'
             for category in categories:
-                html_content += f'<span class="inline-block px-2 py-1 text-xs font-bold rounded-lg mr-1 bg-{color} text-white">{category}</span> '
+                html_content += f'<span class="inline-block px-2 py-0.5 text-xs rounded-lg bg-[#1a1a1a] text-gray-400">{category}</span>'
             html_content += '</div>'
 
         if is_critical and critical_reason:
-            html_content += f'<div class="text-red-600 font-bold mt-2"><strong>Alert:</strong> {critical_reason}</div>'
+            html_content += f'<div class="text-red-400 text-xs mt-2">Alert: {critical_reason}</div>'
 
         html_content += '</div>'
         return html_content
@@ -593,13 +587,14 @@ class ResourcesSection(ReportSection):
         potential = uploaded_files.get('potential_uploads', [])
 
         html_content = f"""
-        <p class="text-white mb-4 text-2xl font-bold">
-            Uploaded files: {len(confirmed)} confirmed, {len(potential)} potential
+        <p class="text-gray-400 text-sm mb-4">
+            Uploaded files: <span class="text-gray-200">{len(confirmed)}</span> confirmed,
+            <span class="text-gray-200">{len(potential)}</span> potential
         </p>
         """
 
         if confirmed or potential:
-            html_content += '<div class="flex flex-wrap justify-between gap-6 mb-6">'
+            html_content += '<div class="flex flex-wrap justify-between gap-4 mb-4">'
 
             html_content += f"""
             <div class="{self._css('subsection')}">
@@ -608,7 +603,7 @@ class ResourcesSection(ReportSection):
             if confirmed:
                 html_content += self._render_files_table(confirmed, ['File', 'Timestamp'], True)
             else:
-                html_content += '<p class="text-gray-300">No confirmed files detected</p>'
+                html_content += '<p class="text-gray-500 text-sm">No confirmed files detected</p>'
             html_content += '</div>'
 
             html_content += f"""
@@ -618,52 +613,52 @@ class ResourcesSection(ReportSection):
             if potential:
                 html_content += self._render_files_table(potential, ['File', 'Source', 'Method'], False)
             else:
-                html_content += '<p class="text-gray-300">No potential files detected</p>'
+                html_content += '<p class="text-gray-500 text-sm">No potential files detected</p>'
             html_content += '</div></div>'
 
         return html_content
 
     def _render_files_table(self, files: List, headers: List, is_confirmed: bool) -> str:
-        html_content = '<table class="w-full border-collapse"><tr>'
+        html_content = '<table class="w-full border-collapse table-fixed"><tr>'
         for header in headers:
-            html_content += f'<th class="p-2 text-left border-b border-gray-500 bg-[#393939] text-white font-bold">{header}</th>'
+            html_content += f'<th class="p-2 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">{header}</th>'
         html_content += '</tr>'
 
         for file_info in files:
             filename = html_module.escape(file_info.get('filename', 'Unknown'))
             html_content += '<tr>'
-            html_content += f'<td class="p-2 border-b border-gray-500"><span class="{self._css("command")}">{filename}</span></td>'
+            html_content += f'<td class="p-2"><span class="{self._css("command")}">{filename}</span></td>'
             if is_confirmed:
                 timestamp = file_info.get('timestamp', 'Unknown')
-                html_content += f'<td class="p-2 border-b border-gray-500 text-white">{timestamp}</td>'
+                html_content += f'<td class="p-2 text-sm text-gray-400 break-all">{timestamp}</td>'
             else:
                 source = html_module.escape(file_info.get('source', 'Unknown'))
                 method = file_info.get('method', 'Unknown')
-                html_content += f'<td class="p-2 border-b border-gray-500 text-white">{source}</td>'
-                html_content += f'<td class="p-2 border-b border-gray-500 text-white">{method}</td>'
+                html_content += f'<td class="p-2 text-sm text-gray-400 break-all">{source}</td>'
+                html_content += f'<td class="p-2 text-sm text-gray-400 break-all">{method}</td>'
             html_content += '</tr>'
 
         html_content += '</table>'
         return html_content
 
     def _render_accessed_resources(self, resources: Dict) -> str:
-        html_content = '<h3 class="text-white text-2xl font-bold mb-4">Accessed resources</h3>'
+        html_content = '<h3 class="text-gray-400 text-sm font-medium mb-3 mt-2">Accessed resources</h3>'
 
         if not resources or not any(resources.values()):
-            return html_content + '<p class="text-gray-300">No accessed resources detected</p>'
+            return html_content + '<p class="text-gray-500 text-sm">No accessed resources detected</p>'
 
-        html_content += '<div class="flex flex-wrap justify-between gap-6">'
+        html_content += '<div class="flex flex-wrap justify-between gap-4">'
         html_content += self._render_resource_column(resources, 'files', 'Files')
         html_content += self._render_resource_column(resources, 'directories', 'Directories')
         html_content += '</div>'
 
         if resources.get('processes') or resources.get('network'):
-            html_content += '<div class="flex flex-wrap justify-between gap-6 mt-6">'
+            html_content += '<div class="flex flex-wrap justify-between gap-4 mt-4">'
             html_content += self._render_resource_column(resources, 'processes', 'Processes')
             html_content += self._render_resource_column(resources, 'network', 'Network')
             html_content += '</div>'
 
-        html_content += '<div class="flex flex-wrap justify-between gap-6 mt-6">'
+        html_content += '<div class="flex flex-wrap justify-between gap-4 mt-4">'
         html_content += self._render_resource_column(resources, 'users', 'Users')
         html_content += self._render_trap_files_column(resources)
         html_content += '</div>'
@@ -679,17 +674,17 @@ class ResourcesSection(ReportSection):
         """
 
         if resource_list:
-            html_content += '<ul class="text-white list-disc pl-5">'
+            html_content += '<ul class="text-gray-300 list-disc pl-5">'
             display_count = min(len(resource_list), self.config.max_resources_per_type)
             for resource in resource_list[:display_count]:
                 escaped_resource = html_module.escape(resource)
-                html_content += f'<li class="mb-2"><span class="{self._css("command")}">{escaped_resource}</span></li>'
+                html_content += f'<li class="mb-1 text-sm break-all"><span class="{self._css("command")}">{escaped_resource}</span></li>'
             if len(resource_list) > display_count:
                 remaining = len(resource_list) - display_count
-                html_content += f'<li class="text-gray-300">... and {remaining} more {res_title.lower()}</li>'
+                html_content += f'<li class="text-gray-500 text-sm">... and {remaining} more {res_title.lower()}</li>'
             html_content += '</ul>'
         else:
-            html_content += f'<p class="text-gray-300">No {res_title.lower()} accessed</p>'
+            html_content += f'<p class="text-gray-500 text-sm">No {res_title.lower()} accessed</p>'
 
         html_content += '</div>'
         return html_content
@@ -703,13 +698,13 @@ class ResourcesSection(ReportSection):
         """
 
         if trap_files:
-            html_content += '<ul class="text-white list-disc pl-5">'
+            html_content += '<ul class="text-gray-300 list-disc pl-5">'
             for trap_file in trap_files:
                 escaped_file = html_module.escape(trap_file)
-                html_content += f'<li class="mb-2"><span class="{self._css("command")}">{escaped_file}</span></li>'
+                html_content += f'<li class="mb-1 text-sm"><span class="{self._css("command")}">{escaped_file}</span></li>'
             html_content += '</ul>'
         else:
-            html_content += '<p class="text-gray-300">No trap files accessed</p>'
+            html_content += '<p class="text-gray-500 text-sm">No trap files accessed</p>'
 
         html_content += '</div>'
         return html_content
@@ -788,25 +783,25 @@ class TimingPatternsSection(ReportSection):
         std_dev = timing.get('std_deviation', 0)
 
         return f"""
-        <div class="flex flex-wrap justify-between gap-6 mb-6">
+        <div class="flex flex-wrap justify-between gap-4 mb-4">
             <div class="{self._css('subsection')}">
                 <h3 class="{self._css('subtitle')}">General Statistics</h3>
                 <table class="w-full border-collapse">
                     <tr>
-                        <td class="p-2 text-lg text-gray-300">Average interval between commands:</td>
-                        <td class="p-2 font-bold text-lg text-white">{avg_interval:.2f} seconds</td>
+                        <td class="p-2 text-sm text-gray-500">Average interval</td>
+                        <td class="p-2 text-sm text-gray-200">{avg_interval:.2f}s</td>
                     </tr>
                     <tr>
-                        <td class="p-2 text-lg text-gray-300">Minimum interval:</td>
-                        <td class="p-2 font-bold text-lg text-white">{min_interval:.2f} seconds</td>
+                        <td class="p-2 text-sm text-gray-500">Minimum interval</td>
+                        <td class="p-2 text-sm text-gray-200">{min_interval:.2f}s</td>
                     </tr>
                     <tr>
-                        <td class="p-2 text-lg text-gray-300">Maximum interval:</td>
-                        <td class="p-2 font-bold text-lg text-white">{max_interval:.2f} seconds</td>
+                        <td class="p-2 text-sm text-gray-500">Maximum interval</td>
+                        <td class="p-2 text-sm text-gray-200">{max_interval:.2f}s</td>
                     </tr>
                     <tr>
-                        <td class="p-2 text-lg text-gray-300">Standard deviation:</td>
-                        <td class="p-2 font-bold text-lg text-white">{std_dev:.2f} seconds</td>
+                        <td class="p-2 text-sm text-gray-500">Standard deviation</td>
+                        <td class="p-2 text-sm text-gray-200">{std_dev:.2f}s</td>
                     </tr>
                 </table>
             </div>
@@ -820,13 +815,13 @@ class TimingPatternsSection(ReportSection):
             return ""
 
         html_content = f"""
-        <h3 class="text-white text-2xl font-bold mb-4">Unusual intervals detected</h3>
+        <h3 class="text-gray-400 text-sm font-medium mb-3">Unusual intervals detected</h3>
         <div class="{self._css('subsection')}">
-            <table class="w-full border-collapse">
+            <table class="w-full border-collapse table-fixed">
                 <tr>
-                    <th class="p-2 text-left bg-[#393939] text-white font-bold">Previous command</th>
-                    <th class="p-2 text-left bg-[#393939] text-white font-bold">Next command</th>
-                    <th class="p-2 text-left bg-[#393939] text-white font-bold">Interval (s)</th>
+                    <th class="p-2 text-left text-xs text-gray-500 font-medium uppercase tracking-wider w-2/5">Previous command</th>
+                    <th class="p-2 text-left text-xs text-gray-500 font-medium uppercase tracking-wider w-2/5">Next command</th>
+                    <th class="p-2 text-left text-xs text-gray-500 font-medium uppercase tracking-wider w-1/5">Interval (s)</th>
                 </tr>
         """
 
@@ -839,7 +834,7 @@ class TimingPatternsSection(ReportSection):
                 <tr>
                     <td class="p-2"><span class="{self._css('command')}">{before}</span></td>
                     <td class="p-2"><span class="{self._css('command')}">{after}</span></td>
-                    <td class="p-2 text-white font-semibold">{time:.2f}</td>
+                    <td class="p-2 text-sm text-gray-300">{time:.2f}</td>
                 </tr>
             """
 
@@ -934,21 +929,21 @@ class ReportGenerator:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{self.config.title}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {{ background: #0a0a0a; font-family: system-ui, sans-serif; }}
+    </style>
 </head>
 <body class="{self.config.css_classes['container']}">
-    <h1 class="text-white mt-5 border-b-2 border-blue-500 pb-3 text-center text-4xl font-black">
-        {self.config.title}
-    </h1>
-    <p class="text-center text-gray-300 text-md mb-8">
-        Generated at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    </p>
+    <div style="padding: 24px 0 8px">
+        <h1 class="text-white text-2xl font-medium">{self.config.title}</h1>
+        <p class="text-gray-500 text-sm mt-1">Generated at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    </div>
 """
 
     def _get_html_footer(self) -> str:
         return f"""
-    <footer class="mt-8 text-center text-sm text-gray-500 border-t border-gray-300 pt-3">
-        <p>Report generated at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-        <p>SSH Honeypot Analyzer</p>
+    <footer class="mt-6 text-sm text-gray-600 pt-4">
+        <p>Report generated at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — SSH Honeypot Analyzer</p>
     </footer>
 </body>
 </html>
